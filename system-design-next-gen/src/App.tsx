@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight, Clock3, FileText, LayoutDashboard, Menu, Pin, RotateCcw, Search, X } from 'lucide-react';
 import { clearProgress, readHeroCollapsed, readPinnedTopics, readProgress, setHeroCollapsed, setTopicRead, togglePinnedTopic } from './lib/progress';
 import type { Catalog, Progress, Topic } from './types';
+import { SubtopicRenderer } from './components/SubtopicRenderer';
+import { speechManager } from './lib/speechManager';
 
 type View = 'dashboard' | 'topic';
 
@@ -118,9 +120,16 @@ function TopicReader({ topic, topics, progress, onBack, onRead }: { topic: Topic
   const previous = topics[index - 1];
   const next = topics[index + 1];
   const [html, setHtml] = useState('');
-  useEffect(() => { setHtml(''); fetch(`./${topic.htmlPath}`).then((response) => response.text()).then(setHtml); }, [topic.htmlPath]);
+  useEffect(() => {
+    speechManager.stop();
+    setHtml('');
+    fetch(`./${topic.htmlPath}`).then((response) => response.text()).then(setHtml);
+    return () => {
+      speechManager.stop();
+    };
+  }, [topic.htmlPath]);
   const isRead = Boolean(progress[topic.slug]?.read);
-  return <article className="reader page-wrap"><button className="back-link" onClick={onBack}><ArrowLeft size={16} /> Back to roadmap</button><div className="reader-heading"><div><span className="eyebrow">{topic.phase}</span><h1>{topic.title}</h1><div className="reader-meta"><span><Clock3 size={15} /> {topic.estimatedMinutes} min read</span><span>{topic.wordCount.toLocaleString()} words</span><span>{topic.source}</span></div></div><button className={isRead ? 'read-control marked' : 'read-control'} onClick={() => onRead(topic, !isRead)}>{isRead ? <Check size={17} /> : <BookOpen size={17} />}{isRead ? 'Marked as read' : 'Mark as read'}</button></div><div className="reader-layout"><div className="article-content" dangerouslySetInnerHTML={{ __html: html || '<p>Loading note...</p>' }} />{topic.pdfs.length > 0 && <aside className="article-aside"><span className="eyebrow">Reference PDF</span>{topic.pdfs.map((pdf) => <a key={pdf} href={pdf} target="_blank" rel="noreferrer"><FileText size={16} /> Open PDF <ArrowRight size={14} /></a>)}</aside>}</div><div className="reader-nav">{previous ? <button onClick={() => { window.history.pushState({}, '', `?topic=${previous.slug}`); window.dispatchEvent(new PopStateEvent('popstate')); }}><ArrowLeft size={16} /><span>Previous<strong>{previous.title}</strong></span></button> : <span />}{next && <button className="next-reader" onClick={() => { window.history.pushState({}, '', `?topic=${next.slug}`); window.dispatchEvent(new PopStateEvent('popstate')); }}><span>Next topic<strong>{next.title}</strong></span><ArrowRight size={16} /></button>}</div></article>;
+  return <article className="reader page-wrap"><button className="back-link" onClick={() => { speechManager.stop(); onBack(); }}><ArrowLeft size={16} /> Back to roadmap</button><div className="reader-heading"><div><span className="eyebrow">{topic.phase}</span><h1>{topic.title}</h1><div className="reader-meta"><span><Clock3 size={15} /> {topic.estimatedMinutes} min read</span><span>{topic.wordCount.toLocaleString()} words</span><span>{topic.source}</span></div></div><button className={isRead ? 'read-control marked' : 'read-control'} onClick={() => onRead(topic, !isRead)}>{isRead ? <Check size={17} /> : <BookOpen size={17} />}{isRead ? 'Marked as read' : 'Mark as read'}</button></div><div className="reader-layout"><SubtopicRenderer html={html} topicSlug={topic.slug} />{topic.pdfs.length > 0 && <aside className="article-aside"><span className="eyebrow">Reference PDF</span>{topic.pdfs.map((pdf) => <a key={pdf} href={pdf} target="_blank" rel="noreferrer"><FileText size={16} /> Open PDF <ArrowRight size={14} /></a>)}</aside>}</div><div className="reader-nav">{previous ? <button onClick={() => { speechManager.stop(); window.history.pushState({}, '', `?topic=${previous.slug}`); window.dispatchEvent(new PopStateEvent('popstate')); }}><ArrowLeft size={16} /><span>Previous<strong>{previous.title}</strong></span></button> : <span />}{next && <button className="next-reader" onClick={() => { speechManager.stop(); window.history.pushState({}, '', `?topic=${next.slug}`); window.dispatchEvent(new PopStateEvent('popstate')); }}><span>Next topic<strong>{next.title}</strong></span><ArrowRight size={16} /></button>}</div></article>;
 }
 
 export { App };
