@@ -27,6 +27,7 @@ function App() {
   const [query, setQuery] = useState('');
   const [activePhase, setActivePhase] = useState('All topics');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [pinnedTopics, setPinnedTopics] = useState<string[]>(readPinnedTopics);
   const [heroCollapsed, setHeroCollapsed] = useState(readHeroCollapsed);
 
@@ -75,7 +76,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
+      <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="brand"><div className="brand-mark">SD</div><div><strong>Field Guide</strong><span>System design, made learnable</span></div></div>
         <button className="sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18} /></button>
         <nav className="primary-nav">
@@ -88,7 +89,7 @@ function App() {
       </aside>
       {mobileOpen && <button className="scrim" onClick={() => setMobileOpen(false)} aria-label="Close menu" />}
       <main className="main-content">
-        <header className="topbar"><button className="menu-button" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button><div className="search-box"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search concepts, systems, patterns..." /></div><div className="topbar-progress"><span>{completion}% complete</span><div><i style={{ width: `${completion}%` }} /></div></div></header>
+        <header className="topbar"><button className="menu-button" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button><button className="sidebar-toggle" onClick={() => setSidebarCollapsed((collapsed) => !collapsed)} aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}>{sidebarCollapsed ? <Menu size={20} /> : <X size={20} />}</button><div className="search-box"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search concepts, systems, patterns..." /></div><div className="topbar-progress"><span>{completion}% complete</span><div><i style={{ width: `${completion}%` }} /></div></div></header>
         {activeTopic ? <TopicReader topic={activeTopic} topics={topics} progress={progress} onBack={() => navigate()} onRead={updateRead} /> : <Dashboard topics={filteredTopics} allTopics={topics} nextTopic={nextTopic} readCount={readCount} completion={completion} phases={phases} pdfs={catalog.pdfs} activePhase={activePhase} onPhase={setActivePhase} onOpen={navigate} progress={progress} pinnedTopics={pinnedTopics} heroCollapsed={heroCollapsed} onTogglePin={togglePin} onToggleHero={toggleHero} />}
       </main>
     </div>
